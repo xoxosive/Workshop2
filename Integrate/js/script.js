@@ -500,9 +500,10 @@ function clear(area) {
 }
 
 function setStatusKeepRelation() {
-    // TODO: 確認選項關聯呈現方式
+    // 根據借閱狀態控制借閱人欄位
     switch (state) {
         case "add":
+            // 新增時隱藏借閱狀態和借閱人欄位
             $("#book_status_d_col").css("display", "none");
             $("#book_keeper_d_col").css("display", "none");
 
@@ -510,31 +511,48 @@ function setStatusKeepRelation() {
             $("#book_keeper_d").prop('required', false);
             break;
         case "update":
+            // 修改時顯示借閱狀態和借閱人欄位
             $("#book_status_d_col").css("display", "");
             $("#book_keeper_d_col").css("display", "");
             $("#book_status_d").prop('required', true);
 
-            var bookStatusId =
-                $("#book_status_d").data("kendoDropDownList").value();
-
-            if (bookStatusId == "A" || bookStatusId == "C") {
-                $("#book_keeper_d").prop('required', false);
-                $("#book_keeper_d").data("kendoDropDownList").enable(false);
-
-                $("#book_detail_area").data("kendoValidator").validateInput($("#book_keeper_d"));
-
-                $("#book_keeper_d_label").removeClass("required");
-
-            } else {
-                $("#book_keeper_d").prop('required', true);
-                $("#book_keeper_d").data("kendoDropDownList").enable(true);
-                $("#book_keeper_d_label").addClass("required");
-            }
+            // 根據借閱狀態控制借閱人欄位
+            updateKeeperFieldByStatus();
             break;
         default:
+            // 當 change 事件從借閱狀態下拉選單觸發時，state 可能不在 add/update 中
+            // 此時如果下拉選單已經初始化，也要更新借閱人欄位
+            if ($("#book_status_d").data("kendoDropDownList")) {
+                updateKeeperFieldByStatus();
+            }
             break;
     }
+}
 
+/**
+ * 根據借閱狀態更新借閱人欄位的啟用/停用狀態
+ * A-可以借出、C-不可借出：非必填、Disable、清空
+ * B-已借出、U-已借出(未領)：必填、Enable
+ */
+function updateKeeperFieldByStatus() {
+    var bookStatusId = $("#book_status_d").data("kendoDropDownList").value();
+
+    if (bookStatusId == "A" || bookStatusId == "C") {
+        // 可以借出 或 不可借出：非必填、停用、清空借閱人
+        $("#book_keeper_d").prop('required', false);
+        $("#book_keeper_d").data("kendoDropDownList").enable(false);
+        // 清空借閱人
+        $("#book_keeper_d").data("kendoDropDownList").value("");
+
+        $("#book_detail_area").data("kendoValidator").validateInput($("#book_keeper_d"));
+        $("#book_keeper_d_label").removeClass("required");
+
+    } else if (bookStatusId == "B" || bookStatusId == "U") {
+        // 已借出 或 已借出(未領)：必填、啟用
+        $("#book_keeper_d").prop('required', true);
+        $("#book_keeper_d").data("kendoDropDownList").enable(true);
+        $("#book_keeper_d_label").addClass("required");
+    }
 }
 
 /**
@@ -577,7 +595,8 @@ function registerRegularComponent() {
                     url: apiRootUrl + "code/bookstatus",
                 }
             }
-        }
+        },
+        change: setStatusKeepRelation
     });
 
     $("#book_class_q").kendoDropDownList({
