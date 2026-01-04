@@ -368,19 +368,29 @@ function showBookForDetail(e, bookId) {
  * @param {*} enable 
  */
 function enableBookDetail(enable) {
-
+    // 一般 Input 欄位
     $("#book_id_d").prop('readonly', !enable);
     $("#book_name_d").prop('readonly', !enable);
     $("#book_author_d").prop('readonly', !enable);
     $("#book_publisher_d").prop('readonly', !enable);
     $("#book_note_d").prop('readonly', !enable);
 
+    // Kendo 控制項
+    var classDropDown = $("#book_class_d").data("kendoDropDownList");
+    var statusDropDown = $("#book_status_d").data("kendoDropDownList");
+    var keeperDropDown = $("#book_keeper_d").data("kendoDropDownList");
+    var boughtDatePicker = $("#book_bought_date_d").data("kendoDatePicker");
+
     if (enable) {
-        $("#book_status_d").data("kendoDropDownList").enable(true);
-        $("#book_bought_date_d").data("kendoDatePicker").enable(true);
+        if (classDropDown) classDropDown.enable(true);
+        if (statusDropDown) statusDropDown.enable(true);
+        if (boughtDatePicker) boughtDatePicker.enable(true);
+        // 借閱人欄位由 setStatusKeepRelation 動態控制，這裡不需強制啟用
     } else {
-        $("#book_status_d").data("kendoDropDownList").readonly();
-        $("#book_bought_date_d").data("kendoDatePicker").readonly();
+        if (classDropDown) classDropDown.enable(false);
+        if (statusDropDown) statusDropDown.enable(false);
+        if (boughtDatePicker) boughtDatePicker.enable(false);
+        if (keeperDropDown) keeperDropDown.enable(false);
     }
 }
 
@@ -422,6 +432,12 @@ function bindBook(bookId) {
 
             // 設定借閱狀態與借閱人關聯
             setStatusKeepRelation();
+
+            // 如果存檔按鈕是隱藏的，代表是查看明細模式，需強制再次設定唯讀
+            // 因為 setStatusKeepRelation 會根據狀態啟用欄位，這裡需要覆蓋它
+            if ($("#btn-save").css("display") === "none") {
+                enableBookDetail(false);
+            }
         }, error: function (xhr) {
             alert(xhr.responseText);
         }
