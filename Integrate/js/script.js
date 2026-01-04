@@ -238,6 +238,10 @@ function addBook() {
             $("#book_detail_area").data("kendoWindow").close();
             var grid = getBooGrid();
             grid.dataSource.read();
+        },
+        error: function (xhr, status, error) {
+            console.error("新增書籍失敗:", xhr.responseText);
+            alert("新增書籍失敗: " + (xhr.responseText || error));
         }
     });
 
@@ -442,6 +446,10 @@ function showBookLendRecord(e) {
             var recordGrid = $("#book_record_grid").data("kendoGrid");
             recordGrid.dataSource.data(response.data);
             $("#book_record_area").data("kendoWindow").title(row.bookName + " 借閱紀錄").open();
+        },
+        error: function (xhr, status, error) {
+            console.error("取得借閱紀錄失敗:", xhr.responseText);
+            alert("取得借閱紀錄失敗: " + (xhr.responseText || error));
         }
     });
 }
