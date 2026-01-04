@@ -276,6 +276,10 @@ function updateBook(bookId) {
             $("#book_detail_area").data("kendoWindow").close();
             var grid = getBooGrid();
             grid.dataSource.read();
+        },
+        error: function (xhr, status, error) {
+            console.error("更新書籍失敗:", xhr.responseText);
+            alert("更新書籍失敗: " + (xhr.responseText || error));
         }
     });
 
