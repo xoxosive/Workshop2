@@ -332,9 +332,6 @@ function showBookForUpdate(e) {
     //綁定資料
     bindBook(bookId);
 
-    //設定借閱狀態與借閱人關聯
-    setStatusKeepRelation();
-
     //開啟 Window
     $("#book_detail_area").data("kendoWindow").open();
 }
@@ -360,9 +357,6 @@ function showBookForDetail(e, bookId) {
     bindBook(bookId);
 
     onClassChange();
-
-    //設定借閱狀態與借閱人關聯
-    setStatusKeepRelation();
 
     //設定畫面唯讀與否
     enableBookDetail(false);
@@ -425,6 +419,9 @@ function bindBook(bookId) {
 
             // 更新圖片
             onClassChange();
+
+            // 設定借閱狀態與借閱人關聯
+            setStatusKeepRelation();
         }, error: function (xhr) {
             alert(xhr.responseText);
         }
@@ -499,59 +496,73 @@ function clear(area) {
     }
 }
 
+/**
+ * 根據新增/修改狀態設定借閱狀態和借閱人欄位的顯示與關聯
+ * 同時也作為借閱狀態下拉選單的 change 事件處理函數
+ */
 function setStatusKeepRelation() {
-    // 根據借閱狀態控制借閱人欄位
-    switch (state) {
-        case "add":
-            // 新增時隱藏借閱狀態和借閱人欄位
-            $("#book_status_d_col").css("display", "none");
-            $("#book_keeper_d_col").css("display", "none");
+    if (state === "add") {
+        // 新增模式：隱藏借閱狀態和借閱人欄位
+        $("#book_status_d_col").hide();
+        $("#book_keeper_d_col").hide();
+        $("#book_status_d").prop('required', false);
+        $("#book_keeper_d").prop('required', false);
+    } else if (state === "update") {
+        // 修改模式：顯示借閱狀態和借閱人欄位
+        $("#book_status_d_col").show();
+        $("#book_keeper_d_col").show();
+        $("#book_status_d").prop('required', true);
+    }
 
-            $("#book_status_d").prop('required', false);
-            $("#book_keeper_d").prop('required', false);
-            break;
-        case "update":
-            // 修改時顯示借閱狀態和借閱人欄位
-            $("#book_status_d_col").css("display", "");
-            $("#book_keeper_d_col").css("display", "");
-            $("#book_status_d").prop('required', true);
-
-            // 根據借閱狀態控制借閱人欄位
-            updateKeeperFieldByStatus();
-            break;
-        default:
-            // 當 change 事件從借閱狀態下拉選單觸發時，state 可能不在 add/update 中
-            // 此時如果下拉選單已經初始化，也要更新借閱人欄位
-            if ($("#book_status_d").data("kendoDropDownList")) {
-                updateKeeperFieldByStatus();
-            }
-            break;
+    // 無論是初始載入還是 change 事件觸發，都要更新借閱人欄位狀態
+    // 只要不是新增模式，就執行更新
+    if (state !== "add") {
+        updateKeeperFieldByStatus();
     }
 }
 
 /**
- * 根據借閱狀態更新借閱人欄位的啟用/停用狀態
- * A-可以借出、C-不可借出：非必填、Disable、清空
- * B-已借出、U-已借出(未領)：必填、Enable
+ * 根據借閱狀態控制借閱人欄位
+ * A-可以借出：非必填、啟用、清空
+ * B-已借出：必填、啟用
+ * C-不可借出：非必填、停用、清空
+ * U-已借出(未領)：必填、啟用
  */
 function updateKeeperFieldByStatus() {
-    var bookStatusId = $("#book_status_d").data("kendoDropDownList").value();
+    var statusDropDown = $("#book_status_d").data("kendoDropDownList");
+    var keeperDropDown = $("#book_keeper_d").data("kendoDropDownList");
+    var keeperLabel = $("#book_keeper_d_label");
+    var validator = $("#book_detail_area").data("kendoValidator");
 
-    if (bookStatusId == "A" || bookStatusId == "C") {
-        // 可以借出 或 不可借出：非必填、停用、清空借閱人
+    // 確保控制項已初始化
+    if (!statusDropDown || !keeperDropDown) {
+        return;
+    }
+
+    var bookStatus = statusDropDown.value();
+
+    if (bookStatus === "A" || bookStatus === "U") {
+        // A-可以借出 or U-已借出(未領)：非必填、停用、清空借閱人
         $("#book_keeper_d").prop('required', false);
-        $("#book_keeper_d").data("kendoDropDownList").enable(false);
-        // 清空借閱人
-        $("#book_keeper_d").data("kendoDropDownList").value("");
+        keeperDropDown.enable(false);  // 停用
+        keeperDropDown.value("");  // 清空借閱人
+        keeperLabel.removeClass("required");
 
-        $("#book_detail_area").data("kendoValidator").validateInput($("#book_keeper_d"));
-        $("#book_keeper_d_label").removeClass("required");
-
-    } else if (bookStatusId == "B" || bookStatusId == "U") {
-        // 已借出 或 已借出(未領)：必填、啟用
+        // 清除驗證錯誤訊息
+        if (validator) {
+            validator.hideMessages();
+            validator.validateInput($("#book_keeper_d"));
+        }
+    } else if (bookStatus === "B" || bookStatus === "C") {
+        // B-已借出 or C-不可借出：必填、啟用
         $("#book_keeper_d").prop('required', true);
-        $("#book_keeper_d").data("kendoDropDownList").enable(true);
-        $("#book_keeper_d_label").addClass("required");
+        keeperDropDown.enable(true);
+        keeperLabel.addClass("required");
+    } else {
+        // 其他狀態或空值：停用借閱人
+        $("#book_keeper_d").prop('required', false);
+        keeperDropDown.enable(false);
+        keeperLabel.removeClass("required");
     }
 }
 
