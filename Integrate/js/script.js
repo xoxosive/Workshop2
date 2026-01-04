@@ -164,10 +164,10 @@ $(function () {
             schema: {
                 model: {
                     fields: {
-                        LendDate: { type: "string" },
-                        BookKeeperId: { type: "string" },
-                        BookKeeperEname: { type: "string" },
-                        BookKeeperCname: { type: "string" }
+                        lendDate: { type: "string" },
+                        keeperId: { type: "string" },
+                        keeperEname: { type: "string" },
+                        keeperCname: { type: "string" }
                     }
                 }
             },
@@ -181,9 +181,9 @@ $(function () {
         },
         columns: [
             { field: "lendDate", title: "借閱日期", width: "10%" },
-            { field: "bookKeeperId", title: "借閱人編號", width: "10%" },
-            { field: "bookKeeperEname", title: "借閱人英文姓名", width: "15%" },
-            { field: "bookKeeperCname", title: "借閱人中文姓名", width: "15%" },
+            { field: "keeperId", title: "借閱人編號", width: "10%" },
+            { field: "keeperEname", title: "借閱人英文姓名", width: "15%" },
+            { field: "keeperCname", title: "借閱人中文姓名", width: "15%" },
         ]
     });
 
